@@ -98,5 +98,54 @@ def fobj_minPA(x, y, probdata):
 
     y.fitness = np.sum(sol)
     y.penalidade = penalties(x, y, probdata)
+    y.fitness_penalizado = y.fitness + y.penalidade
 
-    return
+    return y
+
+
+# Função objetivo 2: Minimizar distância cumulativa de clientes e PAs
+def fobj_mindist(x, y, probdata):
+
+    sol = x.solution
+
+    fit_matrix = np.multiply(sol, probdata.dist_CL_PA)
+    x.fitness = sum(fit_matrix)
+    x.penalidade = penalties(x, y, probdata)
+    x.fitness_penalizado = x.fitness + x.penalidade
+
+    return x
+
+
+# NeighborhoodChange implementation
+def neighborhoodChange(x, xlinha, k):
+    
+    if xlinha.fitness_penalizado < x.fitness_penalizado:
+        x = copy.deepcopy(xlinha)
+        k  = 1
+    else:
+        k += 1
+        
+    return x, k
+
+
+# Shake implementation // TODO: MUDAR HEURISTICAS
+def shake(x,k,probdata):
+    
+    y = copy.deepcopy(x)
+    r = np.random.permutation(probdata.n)       
+    
+    if k == 1:             # apply not operator in one random position
+        y.solution[r[0]] = not(y.solution[r[0]])
+        
+    elif k == 2:           # apply not operator in two random positions        
+        y.solution[r[0]] = not(y.solution[r[0]])
+        y.solution[r[1]] = not(y.solution[r[1]])
+        
+    elif k == 3:           # apply not operator in three random positions
+        y.solution[r[0]] = not(y.solution[r[0]])
+        y.solution[r[1]] = not(y.solution[r[1]])
+        y.solution[r[2]] = not(y.solution[r[2]])        
+    
+    return y
+
+
