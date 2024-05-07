@@ -15,7 +15,7 @@ def probdef(nPA=80**2, nCL=495):
     
     probdata = Struct()
 
-    probdata.CL_cons = # importar consumo dos clientes do .csv
+    probdata.CL_cons = 0# importar consumo dos clientes do .csv
 
     probdata.PA_cap = 54 # em Mbps
     probdata.PA_raio = 84 # em metros
