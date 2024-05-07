@@ -15,7 +15,7 @@ def probdef(nPA=80**2, nCL=495):
     
     probdata = Struct()
 
-    probdata.CL_cons = 0# importar consumo dos clientes do .csv
+    probdata.CL_cons = 0# importar consumo dos clientes do .csv # TODO
 
     probdata.PA_cap = 54 # em Mbps
     probdata.PA_raio = 84 # em metros
@@ -24,8 +24,8 @@ def probdef(nPA=80**2, nCL=495):
     probdata.falloff = 1 # fator de decaimento
 
     # CALCULAR DEPOIS
-    probdata.dist_CL_PA = np.zeros((nCL, nPA)) # distância entre clientes e PAs
-    probdata.exp_CL_PA = np.zeros((nCL, nPA)) # exposição dos clientes aos PAs
+    probdata.dist_CL_PA = np.zeros((nCL, nPA)) # distância entre clientes e PAs # TODO
+    probdata.exp_CL_PA = np.zeros((nCL, nPA)) # exposição dos clientes aos PAs # TODO
 
     probdata.nPA = nPA
     probdata.nCL = nCL
@@ -36,7 +36,7 @@ def probdef(nPA=80**2, nCL=495):
 # Solução inicial
 def sol_inicial(probdata, apply_heur):
     
-    if True: #apply_heur == False: # EDITAR DEPOIS DE IMPLEMENTAR METAHEURISTICA
+    if True: #apply_heur == False: # EDITAR DEPOIS DE IMPLEMENTAR METAHEURISTICA # TODO
         x = Struct()
         x.solution = np.random.randint(0,1,size=(probdata.nCL, probdata.nPA))
         y = Struct()
@@ -48,7 +48,7 @@ def sol_inicial(probdata, apply_heur):
         y = Struct()
         y.solution = np.zeros((probdata.nPA))
 
-        # IMPLEMENTAR METAHEURÍSTICA CONSTRUTIVA AQUI
+        # IMPLEMENTAR METAHEURÍSTICA CONSTRUTIVA AQUI # TODO
     
     return x, y
 
