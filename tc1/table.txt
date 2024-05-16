@@ -1,0 +1,21 @@
+\begin{table}[!h]
+    \caption{População residente, por situação do domicílio e sexo, segundo as Grandes Regiões, as Unidades da Federação e as Regiões Metropolitanas (2011)}
+    \centering
+    \begin{tabular}{|w{l}{5.6cm}|w{r}{2.75cm}|w{r}{2.75cm}|w{r}{2.75cm}|}
+        \hline
+        & \multicolumn{3}{c|}{\makecell{População residente, por situação do domicílio e sexo \\ (1.000 pessoas)}} \\ \cline{2-4}
+        & \multicolumn{3}{c|}{Total} \\ \cline{2-4}
+        & \multicolumn{1}{c|}{Total} & \multicolumn{1}{c|}{Homens} & \multicolumn{1}{c|}{Mulheres} \\ \hline
+        Norte & 16.499 & 8.274 & 8.225 \\ \hline
+        Rondônia & 1.602 & 806 & 796 \\ \hline
+        Acre & 769 & 382 & 387 \\ \hline
+        Amazonas & 3.630 & 1.812 & 1.818 \\ \hline
+        Roraima & 477 & 242 & 236 \\ \hline
+        Pará & 7.878 & 3.957 & 3.921 \\ \hline
+        Região Metropolitana de Belém & 2.158 & 1.025 & 1.133 \\ \hline
+        Amapá & 711 & 356 & 354 \\ \hline
+        Tocantins & 1.432 & 719 & 713 \\ \hline
+    \end{tabular}
+    \vspace{0.5pt}\caption*{Fonte: Elaboração própria.}
+    \label{tab:Tabela1}
+\end{table}
