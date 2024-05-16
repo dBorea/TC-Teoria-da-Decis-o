@@ -59,13 +59,13 @@ class Solution:
 class ProblemData:
     access_points: List[AccessPoint] = []
     clients: List[Client] = []
-    distance_ap_per_client: Dict[int, Dict[int, float]] = np.empty((6400,256))
+    distance_ap_per_client: Dict[int, Dict[int, float]] = np.empty((81**2, 495))
     min_client_service_rate: float = 0.97
-    num_clients: int = 256
+    num_clients: int = 495
 
 def read_clients_from_csv_file() -> List[Client]:
     # Função para ler dados de clientes de um arquivo CSV
-    with open('trab_ref/clientes.csv', newline='') as csvfile:
+    with open('data/clientes.csv', newline='') as csvfile:
         csv_reader = csv.reader(csvfile)
         clients = []
         
@@ -88,11 +88,11 @@ def read_clients_from_csv_file() -> List[Client]:
 def define_problem_data() -> ProblemData:
     # Função para definir os dados do problema
     data = ProblemData()
-    max_distance_for_access = 70
+    max_distance_for_access = 85
     
     # Criar pontos de acesso em uma grade 2D
-    for x in range(0, 400, 5):
-        for y in range(0, 400, 5):
+    for x in range(0, 401, 5):
+        for y in range(0, 401, 5):
             # Criar um novo ponto de acesso com coordenadas
             access_point = AccessPoint(x, y, len(data.access_points))
             # Adicionar o ponto de acesso à lista de pontos de acesso
@@ -128,7 +128,7 @@ def activate_access_point(access_point_id: int, clients_solution: Dict[int, int]
         # Verificar se a largura de banda total com este cliente não excede o limite
         bandwidth_within_limit = (total_bandwidth + client.bandwidth) <= 54
         # Verificar se o cliente está dentro do alcance do ponto de acesso
-        within_range = problem_data.distance_ap_per_client[access_point_id][client.id] <= 70
+        within_range = problem_data.distance_ap_per_client[access_point_id][client.id] <= 85
         
         # Se o cliente ainda não foi atendido, a largura de banda está dentro do limite e o cliente está dentro do alcance do ponto de acesso
         if not_served and bandwidth_within_limit and within_range:
@@ -143,8 +143,8 @@ def initialize_solution(problem_data: ProblemData) -> Solution:
     # Função para inicializar a solução com pontos de acesso distribuídos uniformemente
     initial_solution = Solution()
     
-    # Adicionar um ponto de acesso a cada bloco de 25 pontos de acesso na grade 2D
-    for access_point_id in range(0, 6400, 256):
+    # Adicionar 30 pontos de acesso na grade 2D
+    for access_point_id in range(0, 81**2, 220):
         initial_solution.solution[access_point_id] = access_point_id
 
     return initial_solution
@@ -164,16 +164,18 @@ def objective_function_number_of_APs(solution: Solution, problem_data: ProblemDa
         activate_access_point(access_point_id, client_to_access_point, problem_data)
     
     # Calcular o número de clientes atendidos por ponto de acesso
-    num_clients_per_ap: Dict[int, int] = {}
+    solution.num_clients_per_access_point: Dict[int, int] = {}
     for client in problem_data.clients:
         if client_to_access_point[client.id] != UNDEFINED:
             num_clients_serviced += 1
-            ap_id = client_to_access_point[client.id]
-            num_clients_per_ap[ap_id] = num_clients_per_ap.get(ap_id, 0) + 1
+            if client_to_access_point[client.id] in solution.num_clients_per_access_point:
+                solution.num_clients_per_access_point[client_to_access_point[client.id]] += 1
+            else:
+                solution.num_clients_per_access_point[client_to_access_point[client.id]] = 1
                 
-    # Calcular as restrições mínimas e máximas
+    # Calcular as restrições
     min_clients_constraint = max(0, problem_data.num_clients * problem_data.min_client_service_rate -  num_clients_serviced)
-    max_APs_constraint = max(0, len(solution.solution) - 12)    
+    max_APs_constraint = max(0, len(solution.solution) - 10)    
     
     # Calcular a aptidão, penalidade e aptidão penalizada da solução
     solution.fitness = len(solution.solution)
@@ -181,42 +183,48 @@ def objective_function_number_of_APs(solution: Solution, problem_data: ProblemDa
     solution.penalized_fitness = solution.fitness + solution.penalty
     solution.clients_serviced_percentage = num_clients_serviced / problem_data.num_clients
     solution.client_to_access_point = client_to_access_point
-    solution.num_clients_per_access_point = num_clients_per_ap
     
     return solution
+
 
 def shake(solution: Solution, k: int, problem_data: ProblemData) -> Solution:
     # Função para sacudir a solução, modificando aleatoriamente a solução
     new_solution = copy.deepcopy(solution)
     
     # Ordenar pontos de acesso por número de clientes e selecionar os k primeiros para substituição
-    sorted_ap_clients = sorted(new_solution.num_clients_per_access_point.values())
-    keys_to_replace = [key for key, value in new_solution.num_clients_per_access_point.items() if value in sorted_ap_clients[:k]]
+    # sorted_ap_clients = sorted(new_solution.num_clients_per_access_point.values())
+    # keys_to_replace = [key for key, value in new_solution.num_clients_per_access_point.items() if value in sorted_ap_clients[:k]]
 
     # Substituir os pontos de acesso selecionados por novos pontos de acesso aleatórios
-    while len(keys_to_replace) > 0:
-        old_key = random.choice(keys_to_replace)
-        new_key = int(len(problem_data.access_points) * random.random())
+    index = 0
+    keys = list(solution.solution.keys())
+    gen_keys: Dict[int, int] = {}
+    while index < k:
+        # old_key = random.choice(keys_to_replace)
+        new_key = random.choice(keys)
         
-        while new_key in new_solution.solution:
-            new_key = int(len(problem_data.access_points) * random.random())
-        
+        while new_key in gen_keys:
+            new_key = random.choice(keys)
+
+        gen_keys[new_key] = 0
+
+        new_solution.solution.pop(new_key)
+        new_key = int(81**2 * random.random())
         new_solution.solution[new_key] = new_key
-        del new_solution.solution[old_key]
-        
-        keys_to_replace.remove(old_key)
+        index += 1
     
     # Adicionar novos pontos de acesso se o tamanho da solução for menor que 9
     if len(new_solution.solution) <= 9:
-        while len(new_solution.solution) < 25:
-            key = int(len(problem_data.access_points) * random.random())
-            new_solution.solution[key] = key
+        while len(new_solution.solution) < 30:
+            key = int(81**2 * random.random())
+            if not key in new_solution.solution:
+                new_solution.solution[key] = key
     
     return new_solution
 
 def neighborhood_change(x: Solution, y: Solution, k: int) -> Tuple[Solution, int]:
     # Função para mudar o bairro, atualizando a solução atual se a nova solução for melhor
-    if y.penalized_fitness < x.penalized_fitness or (y.penalized_fitness == x.penalized_fitness and y.clients_serviced_percentage > x.clients_serviced_percentage):
+    if (y.penalized_fitness < x.penalized_fitness or y.penalized_fitness == x.penalized_fitness and y.clients_serviced_percentage > x.clients_serviced_percentage):
         x = copy.deepcopy(y)
         k = 1
     else:
@@ -232,7 +240,7 @@ def best_improvement_local_search(solution: Solution, problem_data: ProblemData)
     # Loop até que não haja mais melhorias na solução
     while improved:
         improved = False
-        for key in current_solution.solution:
+        for key in current_solution.solution.keys():
             # Sacudir a solução e aplicar a função objetivo
             new_solution = shake(current_solution, 1, problem_data)
             new_solution = objective_function_number_of_APs(new_solution, problem_data)
@@ -246,7 +254,7 @@ def best_improvement_local_search(solution: Solution, problem_data: ProblemData)
 
 def find_solution_using_vns(initial_solution: Solution, problem_data: ProblemData) -> Solution:
     # Função para encontrar a solução usando o VNS (Variable Neighborhood Search)
-    max_num_evaluations = 20
+    max_num_evaluations = 400
     num_evaluations = 0
     k_max = 3
     
@@ -265,16 +273,16 @@ def find_solution_using_vns(initial_solution: Solution, problem_data: ProblemDat
         # Loop sobre os valores de k
         while k <= k_max:
             new_solution = shake(current_solution, k, problem_data)
-            print(f'shake: {new_solution.solution}')
+            #print(f'shake: {new_solution.solution}')
             
             # Aplicar busca local de melhoramento
             new_solution = best_improvement_local_search(new_solution, problem_data)
-            print(f'best_improvement_local_search: {new_solution.solution}')
+            #print(f'best_improvement_local_search: {new_solution.solution}')
             new_solution.id = num_evaluations
             
             # Verificar se a nova solução é melhor e atualizar a solução atual
             current_solution, k = neighborhood_change(current_solution, new_solution, k)
-            print(f'neighborhood_change: {current_solution.solution}')
+            #print(f'neighborhood_change: {current_solution.solution}')
 
             # Armazenar informações sobre a solução atual
             history.fit.append(current_solution.fitness)
@@ -290,6 +298,7 @@ def find_solution_using_vns(initial_solution: Solution, problem_data: ProblemDat
 problem_data = define_problem_data()
 # Gerar solução inicial
 initial_solution = initialize_solution(problem_data)
+initial_solution = objective_function_number_of_APs(initial_solution, problem_data)
 print(initial_solution.solution)
 
 num_execucoes = 0
@@ -298,7 +307,7 @@ historicos_de_solucoes: List[Struct] = []
 
 while num_execucoes < 5:
     melhor_solucao, historico = find_solution_using_vns(initial_solution, problem_data)
-    print(f'execução = {num_execucoes} PAs = {melhor_solucao.fitness} Porcentagem de Clientes Atendidos = {melhor_solucao.clients_serviced_percentage} penalização = {melhor_solucao.penalized_fitness}')
+    print(f'execução = {num_execucoes} PAs = {melhor_solucao.fitness} Porcentagem de Clientes Atendidos = {melhor_solucao.clients_serviced_percentage} fitness penalizado = {melhor_solucao.penalized_fitness}')
     historicos_de_solucoes.append(historico)
     melhores_solucoes.append(melhor_solucao)
     num_execucoes += 1
@@ -310,8 +319,8 @@ cores_historico = [f'#{random.randint(0, 0xFFFFFF):06x}' for _ in range(num_exec
 index_historico = 0
 for historico in historicos_de_solucoes:
     s = len(historico.fit_pen)
-    ax1.plot(np.linspace(0,s-1,s), historico.fit_pen, 'k-', color=cores_historico[index_historico])
-    ax2.plot(np.linspace(0,s-1,s), historico.pen, 'b:', color=cores_historico[index_historico])
+    ax1.plot(np.linspace(0,s-1,s), historico.fit_pen, '-', color=cores_historico[index_historico])
+    ax2.plot(np.linspace(0,s-1,s), historico.pen, ':', color=cores_historico[index_historico])
     index_historico += 1
     
 fig.suptitle('Evolução da qualidade da solução candidata')
