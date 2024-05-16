@@ -11,6 +11,8 @@ class Struct:
 
 UNDEFINED: int = -1
 
+TIPO_FOBJ: int = 2 # (1 para minimizar PAs, 2 pra minimizar distâncias)
+
 class Client:
     x: float
     y: float
@@ -150,7 +152,8 @@ def initialize_solution(problem_data: ProblemData) -> Solution:
     return initial_solution
 
 
-def objective_function_number_of_APs(solution: Solution, problem_data: ProblemData) -> Solution:
+
+def objective_function(solution: Solution, problem_data: ProblemData) -> Solution:
     # Função objetivo para calcular o número de pontos de acesso e a penalidade da solução
     client_to_access_point: Dict[int, int] = {}
     num_clients_serviced = 0
@@ -175,11 +178,19 @@ def objective_function_number_of_APs(solution: Solution, problem_data: ProblemDa
                 
     # Calcular as restrições
     min_clients_constraint = max(0, problem_data.num_clients * problem_data.min_client_service_rate -  num_clients_serviced)
-    max_APs_constraint = max(0, len(solution.solution) - 10)    
-    
+    max_APs_constraint = max(0, len(solution.solution) - 10)
+    penalties = 1000 * min_clients_constraint**2 + 400 * max_APs_constraint**2
+
+    if(TIPO_FOBJ == 2):
+        calc_distances: List[float] = []
+        for CL_dist_id, PA_dist_id in client_to_access_point.items():
+            calc_distances.append(max(0, problem_data.distance_ap_per_client[PA_dist_id][CL_dist_id] - 40))
+        max_dist_constraint = sum(calc_distances)
+        penalties += 200*max_dist_constraint
+
     # Calcular a aptidão, penalidade e aptidão penalizada da solução
     solution.fitness = len(solution.solution)
-    solution.penalty = 1000 * min_clients_constraint**2 + 400 * max_APs_constraint**2
+    solution.penalty = penalties
     solution.penalized_fitness = solution.fitness + solution.penalty
     solution.clients_serviced_percentage = num_clients_serviced / problem_data.num_clients
     solution.client_to_access_point = client_to_access_point
@@ -214,7 +225,7 @@ def shake(solution: Solution, k: int, problem_data: ProblemData) -> Solution:
         index += 1
     
     # Adicionar novos pontos de acesso se o tamanho da solução for menor que 9
-    if len(new_solution.solution) <= 9:
+    if len(new_solution.solution) <= (9 * TIPO_FOBJ):
         while len(new_solution.solution) < 30:
             key = int(81**2 * random.random())
             if not key in new_solution.solution:
@@ -243,7 +254,7 @@ def best_improvement_local_search(solution: Solution, problem_data: ProblemData)
         for key in current_solution.solution.keys():
             # Sacudir a solução e aplicar a função objetivo
             new_solution = shake(current_solution, 1, problem_data)
-            new_solution = objective_function_number_of_APs(new_solution, problem_data)
+            new_solution = objective_function(new_solution, problem_data)
             
             # Se a nova solução for melhor, atualizar a solução atual
             if new_solution.penalized_fitness < current_solution.penalized_fitness:
@@ -298,7 +309,7 @@ def find_solution_using_vns(initial_solution: Solution, problem_data: ProblemDat
 problem_data = define_problem_data()
 # Gerar solução inicial
 initial_solution = initialize_solution(problem_data)
-initial_solution = objective_function_number_of_APs(initial_solution, problem_data)
+initial_solution = objective_function(initial_solution, problem_data)
 print(initial_solution.solution)
 
 num_execucoes = 0
