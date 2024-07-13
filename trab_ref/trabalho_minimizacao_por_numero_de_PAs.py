@@ -1,21 +1,13 @@
-'''
-Importa os módulos usados
-'''
 import numpy as np
 import matplotlib.pyplot as plt
 import csv
 import copy
 from typing import Dict, List
 import random
-
-'''
-Define um tipo de dado similar ao Pascal "record" or C "struct"
-'''
 class Struct:
     pass
 
 NAO_DEFINIDO: int = -1
-
 class Cliente:
     x: float
     y: float
@@ -45,7 +37,6 @@ def ler_clientes_do_arquivo_csv() -> List[Cliente]:
             index += 1
         
     return clientes
-
 class PontoDeAcesso:
     x: int = 0
     y: int = 0
@@ -58,7 +49,6 @@ class PontoDeAcesso:
         self.id = index
         self.numero_de_clientes_acessiveis: int = 0
         pass
-
 class Solucao:
     id: int = 0
     fitness: float = 0
@@ -246,7 +236,7 @@ def find_solution_using_RVNS(solucao_inicial: Solucao, dados: DadosDoProblema, h
         
         k = 1
         while k <= kmax:
-            print(f"Solução nº {num_sol_avaliadas}\n")
+            # print(f"Solução nº {num_sol_avaliadas}\n")
             # Gera uma solução candidata na k-ésima vizinhança de x          
             y = shake(x, k, dados)
             y = funcao_objetivo_quantidade_de_PAs(y, dados)
